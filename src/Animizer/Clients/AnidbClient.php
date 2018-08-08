@@ -36,15 +36,14 @@ class AnidbClient extends Client
         if ($xml_file) {
             $data = file_get_contents($xml_file);
             $data = str_replace("`", "'", $data);
-
-            if (stripos($data, '<error>') !== false) {
-                throw new \Exception('Invalid AniDB record');
-            }
-
             $xml = $this->parseXml($data);
         } else {
             $data = $this->request($this->apiUrl . $aid);
             $xml = $this->parseXml($data);
+        }
+
+        if (stripos($data, '<error') !== false) {
+            throw new \Exception('AniDB Returned Error: ' . ((string)$xml->attributes()->code) . ': ' . ((string)$xml));
         }
 
         $anime = [];
