@@ -2,7 +2,7 @@
 
 namespace Animizer\Clients;
 
-use Animizer\Services\Guzzler;
+use GuzzleHttp\Client as GuzzleClient;
 use SimpleXMLElement;
 
 abstract class Client
@@ -24,11 +24,13 @@ abstract class Client
 
     public function request($url)
     {
-        $response = (new Guzzler($this->guzzleOptions))->setUrl($url)->get();
+        $client = (new GuzzleClient());
+
+        $response = $client->request('GET', $url, $this->guzzleOptions);
 
         $this->validateStatus($response->getStatusCode());
 
-        return $response->getBody();
+        return (string)$response->getBody();
     }
 
     public function toArray($string)
