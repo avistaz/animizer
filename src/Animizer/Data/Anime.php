@@ -11,17 +11,7 @@ class Anime implements Arrayable, Jsonable
     /**
      * @var string
      */
-    public $anidb_id;
-
-    /**
-     * @var string
-     */
-    public $ann_id;
-
-    /**
-     * @var string
-     */
-    public $mal_id;
+    public $id;
 
     /**
      * @var string [tv, movie, ova, tv-special, music-video, web, unknown]

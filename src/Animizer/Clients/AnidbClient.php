@@ -48,7 +48,7 @@ class AnidbClient extends Client
 
         $anime = [];
 
-        $anime['anidb_id'] = (string)$xml->attributes()->id;
+        $anime['id'] = (string)$xml->attributes()->id;
         $anime['adult'] = (string)$xml->attributes()->restricted;
         if ($anime['adult'] == "true") {
             $anime['adult'] = true;

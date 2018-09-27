@@ -44,7 +44,7 @@ class AnnClient extends Client
         foreach ($xml->attributes() as $attribute_key => $attribute_value) {
             switch ($attribute_key) {
                 case  'id':
-                    $anime['ann_id'] = (string)$attribute_value;
+                    $anime['id'] = (string)$attribute_value;
                     break;
                 case 'type':
                     $anime['type'] = (string)$attribute_value;
