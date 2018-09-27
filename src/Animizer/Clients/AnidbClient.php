@@ -197,7 +197,6 @@ class AnidbClient extends Client
                 !str_contains($tag['tag'], '--')
             ) {
                 $new_tags[$key]['tag'] = $tag['tag'];
-                $new_tags[$key]['slug'] = str_slug($tag['tag']);
                 $new_tags[$key]['description'] = $tag['description'];
                 $key++;
             }

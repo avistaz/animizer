@@ -18,11 +18,17 @@ class AnnClient extends Client
         parent::__construct();
     }
 
-    public function get($aid)
+    public function get($aid, $xml_file = null)
     {
-        $this->apiUrl = $this->apiUrl . '?title=';
-        $data = $this->request($this->apiUrl . $aid);
-        $xml = $this->parseXml($data);
+        if ($xml_file) {
+            $data = file_get_contents($xml_file);
+            $data = str_replace("`", "'", $data);
+            $xml = $this->parseXml($data);
+        } else {
+            $this->apiUrl = $this->apiUrl . '?title=';
+            $data = $this->request($this->apiUrl . $aid);
+            $xml = $this->parseXml($data);
+        }
 
         if ($xml->anime->count()) {
             $xml = $xml->anime;
@@ -30,36 +36,41 @@ class AnnClient extends Client
             $xml = $xml->manga;
         }
 
-        dump($xml);
+        if (!empty($xml->warning)) {
+            throw new \Exception('ANN Returned Error: ' . (string)$xml->warning);
+        }
 
         $anime = [];
         foreach ($xml->attributes() as $attribute_key => $attribute_value) {
             switch ($attribute_key) {
                 case  'id':
-                    $anime['ann_id'] = (string) $attribute_value;
+                    $anime['ann_id'] = (string)$attribute_value;
                     break;
                 case 'type':
-                    $anime['type'] = (string) $attribute_value;
+                    $anime['type'] = (string)$attribute_value;
                     break;
                 case 'name':
-                    $anime['title'] = (string) $attribute_value;
+                    $anime['title'] = (string)$attribute_value;
                     break;
             }
         }
 
+        $dates = $this->parseDates($xml);
+
         $anime['titles'] = $this->parseTitles($xml);
-        $anime['start_date'] = '';
-        $anime['end_date'] = '';
-        $anime['poster'] = '';
+        $anime['start_date'] = $dates['start'];
+        $anime['end_date'] = $dates['end'];
+        $anime['runtime'] = $this->getValue($xml, "info[@type='Running time']");
+        $anime['poster'] = $this->parsePoster($xml);
         $anime['website'] = '';
         $anime['creators'] = '';
-        $anime['plot'] = '';
-        $anime['genres'] = '';
-        $anime['tags'] = '';
+        $anime['plot'] = $this->getValue($xml, "info[@type='Plot Summary']");
+        $anime['genres'] = $this->getValues($xml, "info[@type='Genres']", 'genre');
+        $anime['tags'] = $this->getValues($xml, "info[@type='Themes']", 'tag');
         $anime['characters'] = '';
-        $anime['episodes'] = '';
-
-        dump($anime);
+        $anime['episodes'] = $this->getEpisodes($xml);
+        $anime['episode_count'] = $anime['episodes']->count();
+        $anime['creators'] = $this->getCreators($xml);
 
         return new Anime(collect($anime));
     }
@@ -74,19 +85,123 @@ class AnnClient extends Client
         if (!empty($xtitles)) {
             $i = 0;
             foreach ($xtitles as $xtitle) {
-                foreach ($xtitle->attributes() as $key => $value) {
-                    if ($key == 'type') {
-                        $titles[$i]['type'] = (string) $value;
-                    } elseif ($key == 'lang') {
-                        $titles[$i]['language'] = (string) $value;
-                    }
-                }
-
-                $titles[$i]['title'] = (string) $xtitle;
+                $titles[$i]['type'] = $this->getAttribute($xtitle, 'type');
+                $titles[$i]['language'] = $this->getAttribute($xtitle, 'lang');
+                $titles[$i]['title'] = (string)$xtitle;
                 $i++;
             }
         }
 
         return collect($titles);
+    }
+
+    private function parseDates(SimpleXMLElement $xml)
+    {
+        $start = null;
+        $end = null;
+
+        $date = $this->getValue($xml, "info[@type='Vintage']");
+        if (!empty($date)) {
+            preg_match_all('/(\d{4}-\d{2}-\d{2})/i', $date, $matches);
+            if (isset($matches[1][0])) {
+                $start = $matches[1][0];
+            }
+            if (isset($matches[1][1])) {
+                $end = $matches[1][1];
+            }
+        }
+
+        return [
+            'start' => $start,
+            'end' => $end,
+        ];
+    }
+
+    private function parsePoster(SimpleXMLElement $xml)
+    {
+        $posters = $xml->xpath("info[@type='Picture']");
+        $image = '';
+        if (!empty($posters)) {
+            foreach ($posters as $poster) {
+                $poster = $this->getAttribute($poster);
+                if (isset($poster['src'])) {
+                    $image = $poster['src'];
+                }
+            }
+        }
+
+        if (!empty($image)) {
+            $image = explode('/', $image);
+            $image = last($image);
+            $image = ($this->apiSecure ? 'https://' : 'http://') . $this->imageUrl . $image;
+        }
+
+        return $image;
+    }
+
+    private function getEpisodes(SimpleXMLElement $xml)
+    {
+        $episodes = [];
+        if (!empty($xml->episode)) {
+            $counter = 0;
+            foreach ($xml->episode as $episode) {
+                $attributes = $this->getAttribute($episode);
+                if ($attributes) {
+                    $episodes[$counter]['episode'] = $attributes['num'];
+                    $episodes[$counter]['title'] = (string)$episode->title[0];
+                    $counter++;
+                }
+            }
+        }
+
+        return collect($episodes);
+    }
+
+    private function getCreators(SimpleXMLElement $xml)
+    {
+        foreach ($xml->staff as $staff) {
+        }
+    }
+
+    private function getValues(SimpleXMLElement $xml, $xpath, $key)
+    {
+        $types = $xml->xpath($xpath);
+        if (!empty($types)) {
+            $data = [];
+            foreach ($types as $type) {
+                $data[][$key] = (string)$type;
+            }
+            return collect($data);
+        }
+
+        return null;
+    }
+
+    private function getValue(SimpleXMLElement $xml, $xpath)
+    {
+        $data = $xml->xpath($xpath);
+        if ($data) {
+            return (string)array_first($data);
+        }
+        return null;
+    }
+
+    /**
+     * @param SimpleXMLElement $element
+     * @param null $attribute
+     * @return array|string
+     */
+    private function getAttribute(SimpleXMLElement $element, $attribute = null)
+    {
+        $data = [];
+        foreach ($element->attributes() as $key => $value) {
+            $data[$key] = (string)$value;
+        }
+
+        if ($attribute && isset($data[$attribute])) {
+            return $data[$attribute];
+        }
+
+        return $data;
     }
 }
