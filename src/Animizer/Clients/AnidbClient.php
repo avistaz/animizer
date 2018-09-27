@@ -194,7 +194,8 @@ class AnidbClient extends Client
                 $tag['verified'] &&
                 !in_array($tag['parent_id'],
                     ['30', '55', '2605', '2609', '2610', '2612', '2613', '2630', '2834', '6151', '6173']) &&
-                !str_contains($tag['tag'], '--')
+                !str_contains($tag['tag'], '--') && 
+                $tag['weight'] >= 100
             ) {
                 $new_tags[$key]['tag'] = $tag['tag'];
                 $new_tags[$key]['description'] = $tag['description'];
