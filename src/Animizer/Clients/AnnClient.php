@@ -57,6 +57,8 @@ class AnnClient extends Client
 
         $dates = $this->parseDates($xml);
 
+        $content_rating = $this->getValue($xml, "info[@type='Objectionable content']");
+
         $anime['titles'] = $this->parseTitles($xml);
         $anime['start_date'] = $dates['start'];
         $anime['end_date'] = $dates['end'];
@@ -71,6 +73,17 @@ class AnnClient extends Client
         $anime['episodes'] = $this->getEpisodes($xml);
         $anime['episode_count'] = $anime['episodes']->count();
         $anime['creators'] = $this->getCreators($xml);
+
+        /**
+         * AA None
+         * OC Mild (mild bad language and/or bloodless violence)
+         * TA Significant (bloody violence and/or swearing and/or nudity)
+         * MA Intense (extremely graphic depictions of sex, drug use, or bloodshed)
+         * AO Pornographic
+         */
+        if($content_rating == 'AO') {
+            $anime['adult'] = true;
+        }
 
         return new Anime(collect($anime));
     }

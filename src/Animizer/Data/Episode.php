@@ -4,7 +4,7 @@ namespace Animizer\Data;
 
 use Illuminate\Support\Collection;
 
-class Person extends Base
+class Episode extends Base
 {
     /**
      * @var int|string
@@ -12,39 +12,34 @@ class Person extends Base
     public $id;
 
     /**
-     * @var string
+     * @var int
      */
-    public $name;
+    public $season;
+
+    /**
+     * @var int
+     */
+    public $episode;
 
     /**
      * @var string
      */
-    public $aka;
-
-    /**
-     * @var string [male|female]
-     */
-    public $gender;
+    public $title;
 
     /**
      * @var string
      */
-    public $birthday;
+    public $release_date;
 
     /**
      * @var string
      */
-    public $deathday;
+    public $plot;
 
     /**
      * @var string
      */
-    public $place_of_birth;
-
-    /**
-     * @var string
-     */
-    public $biography;
+    public $runtime;
 
     /**
      * @var string

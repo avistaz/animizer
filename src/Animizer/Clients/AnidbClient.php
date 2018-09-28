@@ -192,13 +192,16 @@ class AnidbClient extends Client
             if (
                 !empty($tag['parent_id']) &&
                 $tag['verified'] &&
-                !in_array($tag['parent_id'],
-                    ['30', '55', '2605', '2609', '2610', '2612', '2613', '2630', '2834', '6151', '6173']) &&
-                !str_contains($tag['tag'], '--') && 
+                !in_array($tag['parent_id'], ['30', '55', '2605', '2609', '2610', '2612', '2613', '2630', '2834', '6151', '6173']) &&
+                !str_contains($tag['tag'], '--') &&
                 $tag['weight'] >= 100
             ) {
+                $new_tags[$key]['id'] = $tag['id'];
                 $new_tags[$key]['tag'] = $tag['tag'];
                 $new_tags[$key]['description'] = $tag['description'];
+                if (!in_array($tag['id'], ['7', '1760']) && in_array($tag['parent_id'], ['2608', '2848'])) {
+                    $new_tags[$key]['adult'] = true;
+                }
                 $key++;
             }
         }

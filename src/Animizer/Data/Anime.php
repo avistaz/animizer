@@ -2,11 +2,9 @@
 
 namespace Animizer\Data;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Collection;
 
-class Anime implements Arrayable, Jsonable
+class Anime extends Base
 {
     /**
      * @var string
@@ -79,7 +77,7 @@ class Anime implements Arrayable, Jsonable
     public $genres;
 
     /**
-     * @var Collection [tag, slug]
+     * @var Collection
      */
     public $tags;
 
@@ -105,41 +103,18 @@ class Anime implements Arrayable, Jsonable
 
     public function __construct(Collection $data)
     {
-        foreach ($this as $key => $value) {
-            $this->$key = isset($data[$key]) ? $data[$key] : null;
+        parent::__construct($data);
+
+        if ($this->tags instanceof Collection) {
+            $this->tags = $this->tags->map(function ($tag) {
+                return new Tag(collect($tag));
+            });
         }
 
-        return $this;
-    }
-
-
-    /**
-     * Get the instance as an array.
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        $data = [];
-        foreach ($this as $key => $value) {
-            if ($value instanceof Collection) {
-                $data[$key] = $value->toArray();
-            } else {
-                $data[$key] = $value;
-            }
+        if ($this->titles instanceof Collection) {
+            $this->titles = $this->titles->map(function ($title) {
+                return new Title(collect($title));
+            });
         }
-
-        return $data;
-    }
-
-    /**
-     * Convert the object to its JSON representation.
-     *
-     * @param  int $options
-     * @return string
-     */
-    public function toJson($options = 0)
-    {
-        return json_encode($this->toArray());
     }
 }
