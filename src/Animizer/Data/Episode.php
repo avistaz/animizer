@@ -2,8 +2,6 @@
 
 namespace Animizer\Data;
 
-use Illuminate\Support\Collection;
-
 class Episode extends Base
 {
     /**
@@ -29,15 +27,15 @@ class Episode extends Base
     /**
      * @var string
      */
-    public $release_date;
+    public $air_date;
 
     /**
      * @var string
      */
-    public $plot;
+    public $summary;
 
     /**
-     * @var string
+     * @var string [minutes]
      */
     public $runtime;
 
@@ -46,7 +44,7 @@ class Episode extends Base
      */
     public $photo;
 
-    public function __construct(Collection $data)
+    public function __construct(array $data)
     {
         parent::__construct($data);
     }

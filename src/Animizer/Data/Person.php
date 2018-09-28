@@ -2,8 +2,6 @@
 
 namespace Animizer\Data;
 
-use Illuminate\Support\Collection;
-
 class Person extends Base
 {
     /**
@@ -51,7 +49,7 @@ class Person extends Base
      */
     public $photo;
 
-    public function __construct(Collection $data)
+    public function __construct(array $data)
     {
         parent::__construct($data);
     }

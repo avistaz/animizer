@@ -2,8 +2,6 @@
 
 namespace Animizer\Data;
 
-use Illuminate\Support\Collection;
-
 class Title extends Base
 {
     /**
@@ -21,7 +19,7 @@ class Title extends Base
      */
     public $title;
 
-    public function __construct(Collection $data)
+    public function __construct(array $data)
     {
         parent::__construct($data);
         $this->guessTitleType();

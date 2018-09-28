@@ -3,6 +3,7 @@
 namespace Animizer\Clients;
 
 use Animizer\Data\Anime;
+use Animizer\Data\Person;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -56,14 +57,16 @@ class AnidbClient extends Client
             $anime['adult'] = false;
         }
 
+        $titles = $this->parseTitles($xml);
+        $language = $this->guessLanguage($titles);
+        list($title, $title_native, $title_romaji) = $this->guessMainTitles($titles, $language);
+
         $anime['type'] = (string)$xml->type;
-        $anime['language'] = $this->parseTitles($xml, true);
-        $anime['titles'] = $this->parseTitles($xml);
-        $anime['title'] = ($anime_title = $anime['titles']->where('type',
-            'main')->first()) ? $anime_title['title'] : '';
-
-        $anime['titles'] = $this->cleanTitles($anime['title'], $anime['titles']);
-
+        $anime['language'] = $language;
+        $anime['title'] = $title;
+        $anime['title_native'] = $title_native;
+        $anime['title_romaji'] = $title_romaji;
+        $anime['titles'] = $this->cleanupTitles([$title, $title_native, $title_romaji], $titles);
         $anime['start_date'] = (string)$xml->startdate;
         $anime['end_date'] = (string)$xml->enddate;
 
@@ -81,23 +84,20 @@ class AnidbClient extends Client
         $anime['episodes'] = $this->parseEpisodes($xml);
         $anime['franchise'] = $this->parseRelated($xml);
 
-        return new Anime(collect($anime));
+        return new Anime($anime);
     }
 
-    private function parseTitles(SimpleXMLElement $xml, $main = false)
+    private function parseTitles(SimpleXMLElement $xml)
     {
         $titles = [];
         if (!empty($xml->titles->title)) {
-
             $languages = $xml->xpath('titles/title[@xml:lang]/@xml:lang');
             $i = 0;
             foreach ($xml->titles->title as $title) {
                 $titles[$i]['type'] = (string)$title->attributes()->type;
-
                 $titles[$i]['title'] = (string)$title;
                 $i++;
             }
-
             foreach ($languages as $index => $language) {
                 if (isset($titles[$index])) {
                     $titles[$index]['language'] = (string)$language;
@@ -105,43 +105,7 @@ class AnidbClient extends Client
             }
         }
 
-        $titles = collect($titles);
-
-        $main_language = $titles->where('type', 'main')->first();
-        if ($main_language) {
-            $main_language = $main_language['language'];
-            if (Str::startsWith($main_language, 'x-')) {
-                $main_language = Str::replaceFirst('x-', '', $main_language);
-                $main_language = Str::replaceLast('t', '', $main_language);
-            }
-        }
-
-        if ($main) {
-            return $main_language;
-        }
-
-        $new_titles = [];
-        foreach ($titles as $key => $title) {
-            $new_titles[$key] = $title;
-
-            if ($title['type'] == 'official' && ($title['language'] == $main_language || $title['language'] == 'en')) {
-                $new_titles[$key]['type'] = 'main';
-            }
-
-            if (Str::startsWith($title['language'], 'x-')) {
-                $new_titles[$key]['language'] = 'en';
-            }
-
-            if (Str::startsWith($title['language'], 'zh-')) {
-                $new_titles[$key]['language'] = 'zh';
-            }
-
-            if ($new_titles[$key]['type'] != 'main') {
-                $new_titles[$key]['type'] = 'alt';
-            }
-        }
-
-        return collect($new_titles);
+        return collect($titles);
     }
 
     private function parseCreators(SimpleXMLElement $xml)
@@ -158,7 +122,7 @@ class AnidbClient extends Client
             }
         }
 
-        return collect($creators);
+        return $creators;
     }
 
     private function parseTags(SimpleXMLElement $xml)
@@ -206,7 +170,7 @@ class AnidbClient extends Client
             }
         }
 
-        return collect($new_tags);
+        return $new_tags;
     }
 
     private function parseCharacters(SimpleXMLElement $xml)
@@ -227,9 +191,11 @@ class AnidbClient extends Client
                 $characters[$i]['actor_picture'] = '';
                 if (isset($character->seiyuu)) {
                     $seiyuu = $character->seiyuu;
-                    $characters[$i]['actor'] = (string)$seiyuu;
-                    $characters[$i]['actor_id'] = (string)$seiyuu->attributes()->id;
-                    $characters[$i]['actor_picture'] = $this->imageUrl . (string)$seiyuu->attributes()->picture;
+                    $characters[$i]['actor'] = new Person([
+                        'id' => (string)$seiyuu->attributes()->id,
+                        'name' => (string)$seiyuu,
+                        'photo' => $this->imageUrl . (string)$seiyuu->attributes()->picture,
+                    ]);
                 }
 
                 $i++;
@@ -260,15 +226,67 @@ class AnidbClient extends Client
                         }
                     }
 
-                    $episodes[$i]['length'] = (string)$episode->length;
+                    $episodes[$i]['runtime'] = (string)$episode->length;
                     $episodes[$i]['summary'] = (string)$episode->summary;
-                    $episodes[$i]['airdate'] = (string)$episode->airdate;
+                    $episodes[$i]['air_date'] = (string)$episode->airdate;
                 }
                 $i++;
             }
         }
 
         return collect($episodes)->sortBy('episode');
+    }
+
+    private function guessLanguage(Collection $titles)
+    {
+        $title = $titles->first();
+        if (isset($title['language'])) {
+            $language = $title['language'];
+            if (Str::startsWith($language, 'x-') && Str::endsWith($language, 't')) {
+                $language = Str::replaceFirst('x-', '', $language);
+                $language = Str::replaceLast('t', '', $language);
+            }
+            return $language;
+        }
+        return null;
+    }
+
+    private function guessMainTitles(Collection $titles, $language)
+    {
+        $title = null;
+        $title_native = null;
+        $title_romaji = null;
+
+        $english_title = $titles->where('language', 'en')->first();
+        if ($english_title) {
+            $title = $english_title['title'];
+        }
+
+        $romaji_title = $titles->where('language', 'x-' . $language . 't')->first();
+        if ($romaji_title && $romaji_title['title'] != $title) {
+            $title_romaji = $romaji_title['title'];
+        }
+
+        $native_title = $titles->where('language', $language)->first();
+        if ($native_title) {
+            $title_native = $native_title['title'];
+        }
+
+        if (empty($title)) {
+            $first_title = $titles->first();
+            if ($first_title) {
+                $title = $first_title['title'];
+            }
+        }
+        if (empty($title_romaji)) {
+            $title_romaji = $title;
+        }
+
+        return [
+            $title,
+            $title_native,
+            $title_romaji,
+        ];
     }
 
     private function parseRelated($xml)
@@ -307,16 +325,32 @@ class AnidbClient extends Client
         return $plot;
     }
 
-    private function cleanTitles($main_title, Collection $alt_titles)
+    private function cleanupTitles($main_titles, $alt_titles)
     {
         $titles = [];
-        foreach ($alt_titles as $title) {
-            similar_text($main_title, $title['title'], $similarity);
-            if ($similarity < 95) {
-                $titles[] = $title;
+        foreach ($main_titles as $main_title) {
+            foreach ($alt_titles as $title) {
+                if (!in_array($title['title'], $main_titles)) {
+                    if (levenshtein($main_title, $title['title']) > 3) {
+                        $titles[md5($title['title'])] = $title;
+                    }
+                }
             }
         }
 
-        return collect($titles);
+        $titles = array_values($titles);
+
+        $titles = collect($titles)->map(function ($title) {
+            $title['type'] = 'alt';
+            if (Str::startsWith($title['language'], 'x-')) {
+                $title['language'] = 'en';
+            }
+            if (Str::startsWith($title['language'], 'zh-')) {
+                $title['language'] = 'zh';
+            }
+            return $title;
+        })->toArray();
+
+        return $titles;
     }
 }

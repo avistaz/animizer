@@ -2,8 +2,6 @@
 
 namespace Animizer\Data;
 
-use Illuminate\Support\Collection;
-
 class Tag extends Base
 {
     /**
@@ -26,7 +24,7 @@ class Tag extends Base
      */
     public $adult;
 
-    public function __construct(Collection $data)
+    public function __construct(array $data)
     {
         parent::__construct($data);
     }

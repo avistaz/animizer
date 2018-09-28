@@ -3,6 +3,7 @@
 namespace Animizer\Clients;
 
 use Animizer\Data\Anime;
+use Illuminate\Support\Collection;
 use SimpleXMLElement;
 
 class AnnClient extends Client
@@ -59,17 +60,25 @@ class AnnClient extends Client
 
         $content_rating = $this->getValue($xml, "info[@type='Objectionable content']");
 
-        $anime['titles'] = $this->parseTitles($xml);
+        $titles = $this->parseTitles($xml);
+
+        list($title, $title_native, $title_romaji) = $this->guessMainTitles($titles);
+        $anime['title'] = $title;
+        $anime['title_native'] = $title_native;
+        $anime['title_romaji'] = $title_romaji;
+
+        $anime['titles'] = $this->cleanupTitles([$title, $title_native, $title_romaji], $titles);
+        $anime['language'] = 'ja';
         $anime['start_date'] = $dates['start'];
         $anime['end_date'] = $dates['end'];
         $anime['runtime'] = $this->getValue($xml, "info[@type='Running time']");
         $anime['poster'] = $this->parsePoster($xml);
         $anime['website'] = '';
-        $anime['creators'] = '';
+        $anime['creators'] = [];
         $anime['plot'] = $this->getValue($xml, "info[@type='Plot Summary']");
         $anime['genres'] = $this->getValues($xml, "info[@type='Genres']", 'genre');
         $anime['tags'] = $this->getValues($xml, "info[@type='Themes']", 'tag');
-        $anime['characters'] = '';
+        $anime['characters'] = [];
         $anime['episodes'] = $this->getEpisodes($xml);
         $anime['episode_count'] = $anime['episodes']->count();
         $anime['creators'] = $this->getCreators($xml);
@@ -81,11 +90,13 @@ class AnnClient extends Client
          * MA Intense (extremely graphic depictions of sex, drug use, or bloodshed)
          * AO Pornographic
          */
-        if($content_rating == 'AO') {
+        if ($content_rating == 'AO') {
             $anime['adult'] = true;
+        } else {
+            $anime['adult'] = false;
         }
 
-        return new Anime(collect($anime));
+        return new Anime($anime);
     }
 
     private function parseTitles(SimpleXMLElement $xml)
@@ -216,5 +227,59 @@ class AnnClient extends Client
         }
 
         return $data;
+    }
+
+    private function guessMainTitles(Collection $titles)
+    {
+        $title = null;
+        $title_native = null;
+        $title_romaji = null;
+
+        $english_title = $titles->where('language', 'EN')->first();
+        if ($english_title) {
+            $title = $english_title['title'];
+        }
+
+        $romaji_title = $titles->where('language', 'EN');
+        if (isset($romaji_title[1])) {
+            $title_romaji = $romaji_title[1]['title'];
+        }
+
+        $native_title = $titles->where('language', 'JA')->first();
+        if ($native_title) {
+            $title_native = $native_title['title'];
+        }
+
+        if (empty($title)) {
+            $first_title = $titles->first();
+            if ($first_title) {
+                $title = $first_title['title'];
+            }
+        }
+        if (empty($title_romaji)) {
+            $title_romaji = $title;
+        }
+
+        return [
+            $title,
+            $title_native,
+            $title_romaji,
+        ];
+    }
+
+    private function cleanupTitles($main_titles, $alt_titles)
+    {
+        $titles = [];
+        foreach ($main_titles as $main_title) {
+            foreach ($alt_titles as $title) {
+                if (!in_array($title['title'], $main_titles)) {
+                    if (levenshtein($main_title, $title['title']) > 3) {
+                        $titles[md5($title['title'])] = $title;
+                    }
+                }
+            }
+        }
+
+        return array_values($titles);
     }
 }

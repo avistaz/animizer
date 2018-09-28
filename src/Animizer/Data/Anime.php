@@ -32,7 +32,17 @@ class Anime extends Base
     public $title;
 
     /**
-     * @var Collection [type={main, alt}, language, title]
+     * @var string
+     */
+    public $title_native;
+
+    /**
+     * @var
+     */
+    public $title_romaji;
+
+    /**
+     * @var Collection
      */
     public $titles;
 
@@ -101,20 +111,28 @@ class Anime extends Base
      */
     public $franchise;
 
-    public function __construct(Collection $data)
+    public function __construct(array $data)
     {
         parent::__construct($data);
 
-        if ($this->tags instanceof Collection) {
-            $this->tags = $this->tags->map(function ($tag) {
-                return new Tag(collect($tag));
-            });
-        }
+        $this->tags = collect($this->tags)->map(function ($tag) {
+            return new Tag($tag);
+        });
 
-        if ($this->titles instanceof Collection) {
-            $this->titles = $this->titles->map(function ($title) {
-                return new Title(collect($title));
-            });
-        }
+        $this->genres = collect($this->genres)->map(function ($genre) {
+            return new Genre($genre);
+        });
+
+        $this->titles = collect($this->titles)->map(function ($title) {
+            return new Title($title);
+        });
+
+        $this->episodes = collect($this->episodes)->map(function ($episode) {
+            return new Episode($episode);
+        });
+
+        $this->characters = collect($this->characters)->map(function ($character) {
+            return new Character($character);
+        });
     }
 }

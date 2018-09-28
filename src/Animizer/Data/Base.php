@@ -4,11 +4,10 @@ namespace Animizer\Data;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Support\Collection;
 
 abstract class Base implements Arrayable, Jsonable
 {
-    public function __construct(Collection $data)
+    public function __construct(array $data)
     {
         foreach ($this as $key => $value) {
             $this->$key = isset($data[$key]) ? $data[$key] : null;
@@ -24,16 +23,7 @@ abstract class Base implements Arrayable, Jsonable
      */
     public function toArray()
     {
-        $data = [];
-        foreach ($this as $key => $value) {
-            if ($value instanceof Collection) {
-                $data[$key] = $value->toArray();
-            } else {
-                $data[$key] = $value;
-            }
-        }
-
-        return $data;
+        return json_decode(json_encode($this), true);
     }
 
     /**
