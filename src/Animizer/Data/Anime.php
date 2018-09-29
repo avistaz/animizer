@@ -134,5 +134,11 @@ class Anime extends Base
         $this->characters = collect($this->characters)->map(function ($character) {
             return new Character($character);
         });
+
+        $this->franchise = collect($this->franchise)->map(function ($franchise) {
+            return new Franchise($franchise);
+        });
+
+        $this->creators = collect($this->creators);
     }
 }

@@ -3,6 +3,7 @@
 namespace Animizer\Clients;
 
 use Animizer\Data\Anime;
+use Animizer\Data\Person;
 use Illuminate\Support\Collection;
 use SimpleXMLElement;
 
@@ -73,15 +74,15 @@ class AnnClient extends Client
         $anime['end_date'] = $dates['end'];
         $anime['runtime'] = $this->getValue($xml, "info[@type='Running time']");
         $anime['poster'] = $this->parsePoster($xml);
-        $anime['website'] = '';
-        $anime['creators'] = [];
+        $anime['website'] = $this->getWebsite($xml);
         $anime['plot'] = $this->getValue($xml, "info[@type='Plot Summary']");
         $anime['genres'] = $this->getValues($xml, "info[@type='Genres']", 'genre');
         $anime['tags'] = $this->getValues($xml, "info[@type='Themes']", 'tag');
-        $anime['characters'] = [];
+        $anime['characters'] = $this->getCharacters($xml);
         $anime['episodes'] = $this->getEpisodes($xml);
         $anime['episode_count'] = $anime['episodes']->count();
         $anime['creators'] = $this->getCreators($xml);
+        $anime['franchise'] = $this->getFranchise($xml);
 
         /**
          * AA None
@@ -181,10 +182,86 @@ class AnnClient extends Client
         return collect($episodes);
     }
 
+    private function getCharacters(SimpleXMLElement $xml)
+    {
+        $characters = [];
+        foreach ($xml->xpath("cast[@lang='JA']") as $cast) {
+            $characters[] = [
+                'name' => (string)$cast->role,
+                'actor' => new Person([
+                    'id' => $this->getAttribute($cast->person, 'id'),
+                    'name' => (string)$cast->person,
+                ]),
+            ];
+        }
+
+        return $characters;
+    }
+
     private function getCreators(SimpleXMLElement $xml)
     {
+        $creators = [];
         foreach ($xml->staff as $staff) {
+            $creators[] = [
+                'job' => (string)$staff->task,
+                'person' => new Person([
+                    'id' => $this->getAttribute($staff->person, 'id'),
+                    'name' => (string)$staff->person,
+                ]),
+            ];
         }
+
+        return $creators;
+    }
+
+    private function getWebsite(SimpleXMLElement $xml)
+    {
+        $websites = $xml->xpath("info[@type='Official website']");
+        $websites = $this->getAttributes($websites);
+
+        if ($website = $websites->where('lang', 'JA')->first()) {
+            return $website['href'];
+        }
+        if ($website = $websites->where('lang', 'EN')->first()) {
+            return $website['href'];
+        }
+        if ($website = $websites->first()) {
+            return $website['href'];
+        }
+        return null;
+    }
+
+    private function getFranchise(SimpleXMLElement $xml)
+    {
+        $related_prev = $xml->xpath("related-prev");
+        $related_next = $xml->xpath("related-next");
+        $related_all = array_merge($related_prev, $related_next);
+
+        $franchise = [];
+        foreach ($related_all as $related) {
+            $relation = (string)$related['rel'];
+            if ($relation == 'adapted from') {
+                $relation = 'adaptation';
+            }
+            if ($relation == 'sequel of') {
+                $relation = 'prequel';
+            }
+            if ($relation == 'prequel of') {
+                $relation = 'sequel';
+            }
+            if ($relation == 'side story of') {
+                $relation = 'side-story';
+            }
+            if ($relation == 'spinoff of') {
+                $relation = 'spin-off';
+            }
+            $franchise[] = [
+                'id' => (string)$related['id'],
+                'type' => $relation,
+            ];
+        }
+
+        return $franchise;
     }
 
     private function getValues(SimpleXMLElement $xml, $xpath, $key)
@@ -208,6 +285,16 @@ class AnnClient extends Client
             return (string)array_first($data);
         }
         return null;
+    }
+
+    private function getAttributes($elements)
+    {
+        $data = [];
+        foreach ($elements as $element) {
+            $data[] = $this->getAttribute($element);
+        }
+
+        return collect($data);
     }
 
     /**

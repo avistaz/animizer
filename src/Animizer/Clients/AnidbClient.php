@@ -181,14 +181,10 @@ class AnidbClient extends Client
             foreach ($xml->characters->character as $character) {
                 $characters[$i]['id'] = (string)$character->attributes()->id;
                 $characters[$i]['type'] = (string)$character->attributes()->type;
-
                 $characters[$i]['name'] = (string)$character->name;
                 $characters[$i]['gender'] = (string)$character->gender;
                 $characters[$i]['description'] = $this->sanitizePlot((string)$character->description);
                 $characters[$i]['picture'] = $this->imageUrl . (string)$character->picture;
-                $characters[$i]['actor'] = '';
-                $characters[$i]['actor_id'] = '';
-                $characters[$i]['actor_picture'] = '';
                 if (isset($character->seiyuu)) {
                     $seiyuu = $character->seiyuu;
                     $characters[$i]['actor'] = new Person([
@@ -293,16 +289,16 @@ class AnidbClient extends Client
     {
         $related = [];
         if (!empty($xml->relatedanime->anime)) {
-            $i = 0;
             foreach ($xml->relatedanime->anime as $anime) {
-                $related[$i]['id'] = (string)$anime->attributes()->id;
-                $related[$i]['type'] = (string)$anime->attributes()->type;
-                $related[$i]['title'] = (string)$anime;
-                $i++;
+                $related[] = [
+                    'id' => (string)$anime->attributes()->id,
+                    'type' => (string)$anime->attributes()->type,
+                    'title' => (string)$anime,
+                ];
             }
         }
 
-        return collect($related);
+        return $related;
     }
 
     private function sanitizePlot($plot)
