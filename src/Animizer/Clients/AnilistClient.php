@@ -2,6 +2,8 @@
 
 namespace Animizer\Clients;
 
+use Animizer\Data\Anime;
+
 class AnilistClient extends Client
 {
     protected $apiUrl = 'https://graphql.anilist.co';
@@ -15,6 +17,38 @@ class AnilistClient extends Client
     {
         $data = $this->performQuery($ids);
 
+        $anime['id'] = $data['id'];
+        $anime['type'] = $data['type'];
+        $anime['language'] = $data['countryOfOrigin'];
+        $anime['adult'] = $data['isAdult'];
+        $anime['title'] = $data['title']['english'];
+        $anime['title_native'] = $data['title']['native'];
+        $anime['title_romaji'] = $data['title']['romaji'];
+        $anime['titles'] = [];
+        $anime['start_date'] = $data['startDate']['year'] . '-' . $data['startDate']['month'] . '-' . $data['startDate']['day'];
+        $anime['end_date'] = $data['endDate']['year'] . '-' . $data['endDate']['month'] . '-' . $data['endDate']['day'];
+        $anime['runtime'] = $data['duration'];
+        $anime['poster'] = $data['coverImage']['large'];
+        $anime['website'] = null;
+        $anime['creators'] = [];
+        $anime['plot'] = $data['description'];
+        $anime['genres'] = array_map(function ($item) {
+            return ['genre' => $item];
+        }, $data['genres']);
+        $anime['tags'] = array_map(function ($item) {
+            return [
+                'id' => $item['id'],
+                'tag' => $item['name'],
+                'description' => $item['description'],
+                'adult' => $item['isAdult'],
+            ];
+        }, $data['tags']);
+        $anime['characters'] = [];
+        $anime['episode_count'] = '';
+        $anime['episodes'] = [];
+        $anime['franchise'] = [];
+
+        return new Anime($anime);
     }
 
     private function performQuery(array $ids)
