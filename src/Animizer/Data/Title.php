@@ -10,7 +10,7 @@ class Title extends Base
     public $type;
 
     /**
-     * @var string [i18n ISO 3166-1 language code]
+     * @var Language
      */
     public $language;
 
@@ -23,6 +23,8 @@ class Title extends Base
     {
         parent::__construct($data);
         $this->guessTitleType();
+
+        $this->language = new Language([$this->language]);
     }
 
     private function guessTitleType()

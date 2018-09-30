@@ -11,22 +11,25 @@ abstract class Client
 
     protected $apiKey;
 
-    protected $apiSecure = false;
-
     protected $cache = 86400;
+
+    /**
+     * @var GuzzleClient
+     */
+    protected $guzzleClient;
 
     protected $guzzleOptions = [];
 
     public function __construct()
     {
         $this->buildApiUrl();
+
+        $this->guzzleClient = (new GuzzleClient());
     }
 
     public function request($url)
     {
-        $client = (new GuzzleClient());
-
-        $response = $client->request('GET', $url, $this->guzzleOptions);
+        $response = $this->guzzleClient->request('GET', $url, $this->guzzleOptions);
 
         $this->validateStatus($response->getStatusCode());
 
@@ -51,14 +54,12 @@ abstract class Client
     private function validateStatus($statusCode)
     {
         if ($statusCode < 200 && $statusCode > 299) {
-            throw new \HttpResponseException('Invalid Status Code');
+            throw new \HttpResponseException('Error! Client returned code: ' . $statusCode);
         }
     }
 
     private function buildApiUrl()
     {
-        $this->apiUrl = ($this->apiSecure ? 'https://' : 'http://') . $this->apiUrl;
-
         if (str_contains($this->apiUrl, '##APIKEY##')) {
             $this->apiUrl = str_replace('##APIKEY##', $this->apiKey, $this->apiUrl);
         }

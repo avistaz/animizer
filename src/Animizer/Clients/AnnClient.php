@@ -9,11 +9,9 @@ use SimpleXMLElement;
 
 class AnnClient extends Client
 {
-    protected $apiUrl = 'cdn.animenewsnetwork.com/encyclopedia/api.xml';
+    protected $apiUrl = 'http://cdn.animenewsnetwork.com/encyclopedia/api.xml';
 
-    protected $imageUrl = 'www.animenewsnetwork.com/images/encyc/';
-
-    protected $apiSecure = false;
+    protected $imageUrl = 'http://www.animenewsnetwork.com/images/encyc/';
 
     public function __construct()
     {
@@ -158,7 +156,7 @@ class AnnClient extends Client
         if (!empty($image)) {
             $image = explode('/', $image);
             $image = last($image);
-            $image = ($this->apiSecure ? 'https://' : 'http://') . $this->imageUrl . $image;
+            $image = $this->imageUrl . $image;
         }
 
         return $image;
@@ -219,10 +217,10 @@ class AnnClient extends Client
         $websites = $xml->xpath("info[@type='Official website']");
         $websites = $this->getAttributes($websites);
 
-        if ($website = $websites->where('lang', 'JA')->first()) {
+        if ($website = $websites->where('lang', 'EN')->first()) {
             return $website['href'];
         }
-        if ($website = $websites->where('lang', 'EN')->first()) {
+        if ($website = $websites->where('lang', 'JA')->first()) {
             return $website['href'];
         }
         if ($website = $websites->first()) {

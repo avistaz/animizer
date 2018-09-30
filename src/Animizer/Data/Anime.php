@@ -17,7 +17,7 @@ class Anime extends Base
     public $type;
 
     /**
-     * @var [2 character language code]
+     * @var Language
      */
     public $language;
 
@@ -114,6 +114,8 @@ class Anime extends Base
     public function __construct(array $data)
     {
         parent::__construct($data);
+
+        $this->language = new Language([$this->language]);
 
         $this->tags = collect($this->tags)->map(function ($tag) {
             return new Tag($tag);
