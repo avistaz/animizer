@@ -40,33 +40,18 @@ class AnnClient extends Client
             throw new \Exception('ANN Returned Error: ' . (string)$xml->warning);
         }
 
-        $anime = [];
-        foreach ($xml->attributes() as $attribute_key => $attribute_value) {
-            switch ($attribute_key) {
-                case  'id':
-                    $anime['id'] = (string)$attribute_value;
-                    break;
-                case 'type':
-                    $anime['type'] = (string)$attribute_value;
-                    break;
-                case 'name':
-                    $anime['title'] = (string)$attribute_value;
-                    break;
-            }
-        }
-
         $dates = $this->parseDates($xml);
-
         $content_rating = $this->getValue($xml, "info[@type='Objectionable content']");
-
         $titles = $this->parseTitles($xml);
-
         list($title, $title_native, $title_romaji) = $this->guessMainTitles($titles);
-        $anime['title'] = $title;
+
+        $anime = [];
+        $anime['id'] = (string)$xml->attributes()->id;
+        $anime['type'] = (string)$xml->attributes()->type;
+        $anime['title'] = (string)$xml->attributes()->name;
         $anime['title_native'] = $title_native;
         $anime['title_romaji'] = $title_romaji;
-
-        $anime['titles'] = $this->cleanupTitles([$title, $title_native, $title_romaji], $titles);
+        $anime['titles'] = $this->cleanupTitles([$anime['title'], $title_native, $title_romaji], $titles);
         $anime['language'] = 'ja';
         $anime['start_date'] = $dates['start'];
         $anime['end_date'] = $dates['end'];
@@ -90,6 +75,13 @@ class AnnClient extends Client
                 $anime['runtime'] = 60;
             } else {
                 $anime['runtime'] = null;
+            }
+        }
+
+        if ($anime['type'] == 'manga') {
+            $precision = (string)$xml->attributes()->precision;
+            if (!empty($precision)) {
+                $anime['type'] = $precision;
             }
         }
 
