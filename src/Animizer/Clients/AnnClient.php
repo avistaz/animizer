@@ -82,6 +82,17 @@ class AnnClient extends Client
         $anime['staffs'] = $this->getStaffs($xml);
         $anime['franchise'] = $this->getFranchise($xml);
 
+        if (!is_numeric($anime['runtime'])) {
+            $anime['runtime'] = strtolower($anime['runtime']);
+            if ($anime['runtime'] == 'half hour') {
+                $anime['runtime'] = 30;
+            } elseif ($anime['runtime'] == 'one hour') {
+                $anime['runtime'] = 60;
+            } else {
+                $anime['runtime'] = null;
+            }
+        }
+
         /**
          * AA None
          * OC Mild (mild bad language and/or bloodless violence)
