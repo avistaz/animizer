@@ -159,19 +159,6 @@ class Anime extends Base
     {
         if (!empty($this->type)) {
             $this->type = strtolower($this->type);
-
-            if ($this->type == 'oav') {
-                $this->type = 'ova';
-            }
-
-            if (in_array($this->type, ['tv series', 'tv special'])) {
-                $this->type = 'tv';
-            }
-
-            if (in_array($this->type, ['movie', 'tv', 'manga', 'ova'])) {
-                return $this->type;
-            }
-
             return $this->type;
         }
 
