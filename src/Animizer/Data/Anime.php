@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 class Anime extends Base
 {
     /**
-     * @var string
+     * @var int|string
      */
     public $id;
 
@@ -111,9 +111,16 @@ class Anime extends Base
      */
     public $franchise;
 
+    /**
+     * @var Collection
+     */
+    public $sources;
+
     public function __construct(array $data)
     {
         parent::__construct($data);
+
+        $this->type = $this->guessType();
 
         $this->language = new Language([$this->language]);
 
@@ -142,5 +149,19 @@ class Anime extends Base
         });
 
         $this->creators = collect($this->creators);
+
+        $this->sources = collect($this->sources)->map(function ($source) {
+            return new Source($source);
+        });
+    }
+
+    private function guessType()
+    {
+        if (!empty($this->type)) {
+            $this->type = strtolower($this->type);
+            return $this->type;
+        }
+
+        return null;
     }
 }

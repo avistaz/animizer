@@ -5,7 +5,7 @@ namespace Animizer\Data;
 class Franchise extends Base
 {
     /**
-     * @var string
+     * @var int|string
      */
     public $id;
 

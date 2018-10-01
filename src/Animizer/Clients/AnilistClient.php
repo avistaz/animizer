@@ -18,15 +18,22 @@ class AnilistClient extends Client
         $data = $this->performQuery($ids);
 
         $anime['id'] = $data['id'];
-        $anime['type'] = $data['type'];
+        $anime['type'] = $data['format'];
         $anime['language'] = $data['countryOfOrigin'];
         $anime['adult'] = $data['isAdult'];
         $anime['title'] = $data['title']['english'];
         $anime['title_native'] = $data['title']['native'];
         $anime['title_romaji'] = $data['title']['romaji'];
         $anime['titles'] = [];
-        $anime['start_date'] = $data['startDate']['year'] . '-' . $data['startDate']['month'] . '-' . $data['startDate']['day'];
-        $anime['end_date'] = $data['endDate']['year'] . '-' . $data['endDate']['month'] . '-' . $data['endDate']['day'];
+
+        if (!empty($data['startDate']['year']) && !empty($data['startDate']['month']) && !empty($data['startDate']['day'])) {
+            $anime['start_date'] = $data['startDate']['year'] . '-' . $data['startDate']['month'] . '-' . $data['startDate']['day'];
+        }
+
+        if (!empty($data['endDate']['year']) && !empty($data['endDate']['month']) && !empty($data['endDate']['day'])) {
+            $anime['end_date'] = $data['endDate']['year'] . '-' . $data['endDate']['month'] . '-' . $data['endDate']['day'];
+        }
+
         $anime['runtime'] = $data['duration'];
         $anime['poster'] = $data['coverImage']['large'];
         $anime['website'] = null;
@@ -44,9 +51,12 @@ class AnilistClient extends Client
             ];
         }, $data['tags']);
         $anime['characters'] = [];
-        $anime['episode_count'] = '';
+        $anime['episode_count'] = $data['episodes'];
         $anime['episodes'] = [];
         $anime['franchise'] = [];
+        $anime['sources'] = !empty($data['idMal']) ? [
+            ['id' => $data['idMal'], 'url' => 'https://myanimelist.net/anime/' . $data['idMal']],
+        ] : null;
 
         return new Anime($anime);
     }
@@ -58,6 +68,7 @@ class AnilistClient extends Client
             id
             idMal
             type
+            format
             title {
               romaji
               english
@@ -93,6 +104,7 @@ class AnilistClient extends Client
               url
             }
             genres
+            episodes
             tags {
               id
               name
