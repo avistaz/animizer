@@ -79,7 +79,7 @@ class AnnClient extends Client
         $anime['characters'] = $this->getCharacters($xml);
         $anime['episodes'] = $this->getEpisodes($xml);
         $anime['episode_count'] = $anime['episodes']->count();
-        $anime['creators'] = $this->getCreators($xml);
+        $anime['staffs'] = $this->getStaffs($xml);
         $anime['franchise'] = $this->getFranchise($xml);
 
         /**
@@ -108,8 +108,8 @@ class AnnClient extends Client
         if (!empty($xtitles)) {
             $i = 0;
             foreach ($xtitles as $xtitle) {
-                $titles[$i]['type'] = $this->getAttribute($xtitle, 'type');
-                $titles[$i]['language'] = $this->getAttribute($xtitle, 'lang');
+                $titles[$i]['type'] = (string)$xtitle->attributes()->type;
+                $titles[$i]['language'] = (string)$xtitle->attributes()->lang;
                 $titles[$i]['title'] = (string)$xtitle;
                 $i++;
             }
@@ -146,10 +146,7 @@ class AnnClient extends Client
         $image = '';
         if (!empty($posters)) {
             foreach ($posters as $poster) {
-                $poster = $this->getAttribute($poster);
-                if (isset($poster['src'])) {
-                    $image = $poster['src'];
-                }
+                $image = (string)$poster->attributes()->src;
             }
         }
 
@@ -168,12 +165,9 @@ class AnnClient extends Client
         if (!empty($xml->episode)) {
             $counter = 0;
             foreach ($xml->episode as $episode) {
-                $attributes = $this->getAttribute($episode);
-                if ($attributes) {
-                    $episodes[$counter]['episode'] = $attributes['num'];
-                    $episodes[$counter]['title'] = (string)$episode->title[0];
-                    $counter++;
-                }
+                $episodes[$counter]['episode'] = (string)$episode->attributes()->num;
+                $episodes[$counter]['title'] = (string)$episode->title;
+                $counter++;
             }
         }
 
@@ -187,7 +181,7 @@ class AnnClient extends Client
             $characters[] = [
                 'name' => (string)$cast->role,
                 'actor' => new Person([
-                    'id' => $this->getAttribute($cast->person, 'id'),
+                    'id' => (string)$cast->person->attributes()->id,
                     'name' => (string)$cast->person,
                 ]),
             ];
@@ -196,26 +190,26 @@ class AnnClient extends Client
         return $characters;
     }
 
-    private function getCreators(SimpleXMLElement $xml)
+    private function getStaffs(SimpleXMLElement $xml)
     {
-        $creators = [];
+        $staffs = [];
         foreach ($xml->staff as $staff) {
-            $creators[] = [
+            $staffs[] = [
                 'job' => (string)$staff->task,
                 'person' => new Person([
-                    'id' => $this->getAttribute($staff->person, 'id'),
+                    'id' => (string)$staff->person->attributes()->id,
                     'name' => (string)$staff->person,
                 ]),
             ];
         }
 
-        return $creators;
+        return $staffs;
     }
 
     private function getWebsite(SimpleXMLElement $xml)
     {
         $websites = $xml->xpath("info[@type='Official website']");
-        $websites = $this->getAttributes($websites);
+        $websites = $this->collectAttributes($websites);
 
         if ($website = $websites->where('lang', 'EN')->first()) {
             return $website['href'] ?? null;
@@ -286,33 +280,16 @@ class AnnClient extends Client
         return null;
     }
 
-    private function getAttributes($elements)
+    private function collectAttributes($elements)
     {
         $data = [];
-        foreach ($elements as $element) {
-            $data[] = $this->getAttribute($element);
+        foreach ($elements as $master => $element) {
+            foreach ($element->attributes() as $key => $value) {
+                $data[$master][$key] = (string)$value;
+            }
         }
 
         return collect($data);
-    }
-
-    /**
-     * @param SimpleXMLElement $element
-     * @param null $attribute
-     * @return array|string
-     */
-    private function getAttribute(SimpleXMLElement $element, $attribute = null)
-    {
-        $data = [];
-        foreach ($element->attributes() as $key => $value) {
-            $data[$key] = (string)$value;
-        }
-
-        if ($attribute && isset($data[$attribute])) {
-            return $data[$attribute];
-        }
-
-        return $data;
     }
 
     private function guessMainTitles(Collection $titles)

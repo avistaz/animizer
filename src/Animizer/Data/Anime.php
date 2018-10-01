@@ -74,7 +74,7 @@ class Anime extends Base
     /**
      * @var Collection
      */
-    public $creators;
+    public $staffs;
 
     /**
      * @var string
@@ -122,7 +122,9 @@ class Anime extends Base
 
         $this->type = $this->guessType();
 
-        $this->language = new Language([$this->language]);
+        if (!($this->language instanceof Language)) {
+            $this->language = new Language((array)$this->language);
+        }
 
         $this->tags = collect($this->tags)->map(function ($tag) {
             return new Tag($tag);
@@ -148,7 +150,9 @@ class Anime extends Base
             return new Franchise($franchise);
         });
 
-        $this->creators = collect($this->creators);
+        $this->staffs = collect($this->staffs)->map(function ($staff) {
+            return new Staff($staff);
+        });
 
         $this->sources = collect($this->sources)->map(function ($source) {
             return new Source($source);

@@ -243,9 +243,8 @@ class Language extends Base
             'zu' => 'Zulu'
         ];
 
-        if (empty($this->code) && empty($this->language)) {
-            $code = array_first($data);
-            $code = strtolower($code);
+        if (empty($this->code) && !empty($data)) {
+            $code = strtolower(reset($data));
             if (isset($languages[$code])) {
                 $this->code = $code;
                 $this->language = $languages[$code];

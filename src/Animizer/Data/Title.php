@@ -24,7 +24,9 @@ class Title extends Base
         parent::__construct($data);
         $this->guessTitleType();
 
-        $this->language = new Language([$this->language]);
+        if (!($this->language instanceof Language)) {
+            $this->language = new Language((array)$this->language);
+        }
     }
 
     private function guessTitleType()

@@ -37,7 +37,7 @@ class AnilistClient extends Client
         $anime['runtime'] = $data['duration'];
         $anime['poster'] = $data['coverImage']['large'];
         $anime['website'] = null;
-        $anime['creators'] = [];
+        $anime['staffs'] = [];
         $anime['plot'] = $data['description'];
         $anime['genres'] = array_map(function ($item) {
             return ['genre' => $item];

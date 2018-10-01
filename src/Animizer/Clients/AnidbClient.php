@@ -72,7 +72,7 @@ class AnidbClient extends Client
 
         $anime['poster'] = $this->imageUrl . (string)$xml->picture;
         $anime['website'] = (string)$xml->url;
-        $anime['creators'] = $this->parseCreators($xml);
+        $anime['staffs'] = $this->parseStaffs($xml);
         $anime['plot'] = $this->sanitizePlot((string)$xml->description);
         $anime['tags'] = $this->parseTags($xml);
         $anime['characters'] = $this->parseCharacters($xml);
@@ -104,21 +104,22 @@ class AnidbClient extends Client
         return collect($titles);
     }
 
-    private function parseCreators(SimpleXMLElement $xml)
+    private function parseStaffs(SimpleXMLElement $xml)
     {
-        $creators = [];
+        $staffs = [];
         if (!empty($xml->creators->name)) {
             $i = 0;
             foreach ($xml->creators->name as $creator) {
-                $creators[$i]['id'] = (string)$creator->attributes()->id;
-                $creators[$i]['type'] = (string)$creator->attributes()->type;
-
-                $creators[$i]['name'] = (string)$creator;
+                $staffs[$i]['job'] = (string)$creator->attributes()->type;
+                $staffs[$i]['person'] = [
+                    'id' => (string)$creator->attributes()->id,
+                    'name' => (string)$creator,
+                ];
                 $i++;
             }
         }
 
-        return $creators;
+        return $staffs;
     }
 
     private function parseTags(SimpleXMLElement $xml)
