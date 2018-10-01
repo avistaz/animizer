@@ -79,6 +79,10 @@ class AnilistClient extends Client
               day
             }
             duration
+            trailer {
+              id
+              site
+            }
             coverImage {
               large
               medium
@@ -153,6 +157,22 @@ class AnilistClient extends Client
                   id
                   name
                   siteUrl
+                }
+              }
+            }
+            relations {
+              edges {
+                id
+                relationType
+                node {
+                  id
+                  idMal
+                  title {
+                    romaji
+                    english
+                    native
+                    userPreferred
+                  }
                 }
               }
             }
