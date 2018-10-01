@@ -218,14 +218,15 @@ class AnnClient extends Client
         $websites = $this->getAttributes($websites);
 
         if ($website = $websites->where('lang', 'EN')->first()) {
-            return $website['href'];
+            return $website['href'] ?? null;
         }
         if ($website = $websites->where('lang', 'JA')->first()) {
-            return $website['href'];
+            return $website['href'] ?? null;
         }
         if ($website = $websites->first()) {
-            return $website['href'];
+            return $website['href'] ?? null;
         }
+
         return null;
     }
 
