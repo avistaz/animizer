@@ -161,24 +161,130 @@ class Anime extends Base
 
     private function guessType()
     {
-        if (!empty($this->type)) {
-            $this->type = strtolower($this->type);
+        $types = collect([
+            [
+                'category' => 'TV Series',
+                'slug' => 'tv.series',
+            ],
+            [
+                'category' => 'Movie',
+                'slug' => 'movie',
+            ],
+            [
+                'category' => 'OVA',
+                'slug' => 'ova',
+            ],
+            [
+                'category' => 'OAD',
+                'slug' => 'oad',
+            ],
+            [
+                'category' => 'TV Special',
+                'slug' => 'tv.special',
+            ],
+            [
+                'category' => 'BD/DVD Special',
+                'slug' => 'bd.dvd.special',
+            ],
+            [
+                'category' => 'Web/ONA',
+                'slug' => 'web.ona',
+            ],
+            [
+                'category' => 'Aeni',
+                'slug' => 'aeni',
+            ],
+            [
+                'category' => 'Donghua',
+                'slug' => 'donghua',
+            ],
+            [
+                'category' => 'Doujin Anime',
+                'slug' => 'doujin.anime',
+            ],
+            [
+                'category' => 'Music Video',
+                'slug' => 'music.video',
+            ],
+            [
+                'category' => 'Other',
+                'slug' => 'other',
+            ],
+            [
+                'category' => 'Manga',
+                'slug' => 'manga',
+            ],
+            [
+                'category' => 'Artbook',
+                'slug' => 'artbook',
+            ],
+            [
+                'category' => 'Light Novel',
+                'slug' => 'light.novel',
+            ],
+            [
+                'category' => 'Manhwa',
+                'slug' => 'manhwa',
+            ],
+            [
+                'category' => 'Manhua',
+                'slug' => 'manhua',
+            ],
+            [
+                'category' => 'Doujinshi',
+                'slug' => 'doujinshi',
+            ],
+            [
+                'category' => 'One-Shot',
+                'slug' => 'one.shot',
+            ],
+            [
+                'category' => 'OST',
+                'slug' => 'ost',
+            ],
+            [
+                'category' => 'Album',
+                'slug' => 'album',
+            ],
+            [
+                'category' => 'Single',
+                'slug' => 'single',
+            ],
+            [
+                'category' => 'Drama',
+                'slug' => 'drama',
+            ],
+            [
+                'category' => 'Compilation',
+                'slug' => 'compilation',
+            ],
+        ]);
+        $type = $this->type;
 
-            if ($this->type == 'oav') {
-                $this->type = 'ova';
+        if (!empty($type)) {
+            $type = strtolower($this->type);
+            $type = str_replace([' ', '/', '.'], '.', $type);
+
+            switch ($type) {
+                case 'oav':
+                    $type = 'ova';
+                    break;
+                case 'tv':
+                    $type = 'tv.series';
+                    break;
+                case 'web':
+                case 'ona':
+                    $type = 'web.ona';
+                    break;
+                case 'omnibus':
+                    $type = 'manga';
+                    break;
+
+                default:
+                    break;
             }
-
-            if (in_array($this->type, ['tv series', 'tv special'])) {
-                $this->type = 'tv';
-            }
-
-            if (in_array($this->type, ['movie', 'tv', 'manga', 'ova'])) {
-                return $this->type;
-            }
-
-            return $this->type;
         }
 
-        return null;
+        return $type;
     }
 }
