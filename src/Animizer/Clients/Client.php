@@ -2,8 +2,8 @@
 
 namespace Animizer\Clients;
 
+use DOMDocument;
 use GuzzleHttp\Client as GuzzleClient;
-use SimpleXMLElement;
 
 abstract class Client
 {
@@ -48,7 +48,17 @@ abstract class Client
 
     public function parseXml($body)
     {
-        return new SimpleXMLElement($body);
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument("1.0", "UTF-8");
+        $dom->strictErrorChecking = false;
+        $dom->validateOnParse = false;
+        $dom->recover = true;
+        $dom->loadXML($body);
+        $xml = simplexml_import_dom($dom);
+        libxml_clear_errors();
+        libxml_use_internal_errors(false);
+
+        return $xml;
     }
 
     private function validateStatus($statusCode)
