@@ -255,14 +255,8 @@ class AnidbClient extends Client
         if ($english_title) {
             $title = $english_title['title'];
         }
-        if (empty($title)) {
+        if (empty($english_title)) {
             $english_title = $titles->where('language', 'en')->where('type', 'official')->first();
-            if ($english_title) {
-                $title = $english_title['title'];
-            }
-        }
-        if (empty($title)) {
-            $english_title = $titles->where('language', 'en')->first();
             if ($english_title) {
                 $title = $english_title['title'];
             }
@@ -278,12 +272,6 @@ class AnidbClient extends Client
                 $title_romaji = $romaji_title['title'];
             }
         }
-        if (empty($romaji_title)) {
-            $romaji_title = $titles->where('language', 'x-' . $language . 't')->first();
-            if ($romaji_title && $romaji_title['title'] != $title) {
-                $title_romaji = $romaji_title['title'];
-            }
-        }
 
         $native_title = $titles->where('language', $language)->where('type', 'main')->first();
         if ($native_title && $native_title['title'] != $title && $native_title['title'] != $romaji_title) {
@@ -295,21 +283,12 @@ class AnidbClient extends Client
                 $title_native = $native_title['title'];
             }
         }
-        if (empty($native_title)) {
-            $native_title = $titles->where('language', $language)->first();
-            if ($native_title && $native_title['title'] != $title && $native_title['title'] != $romaji_title) {
-                $title_native = $native_title['title'];
-            }
-        }
 
         if (empty($title)) {
             $first_title = $titles->first();
             if ($first_title) {
                 $title = $first_title['title'];
             }
-        }
-        if (empty($title_romaji)) {
-            $title_romaji = $title;
         }
 
         return [
