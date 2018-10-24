@@ -51,7 +51,7 @@ class AnnClient extends Client
         $anime = [];
         $anime['id'] = (string)$xml->attributes()->id;
         $anime['type'] = (string)$xml->attributes()->type;
-        $anime['url'] = 'https://www.animenewsnetwork.com/encyclopedia/' . $type . '.php?id=' . $anime['id'];
+        $anime['url'] = 'animenewsnetwork.com/encyclopedia/' . $type . '.php?id=' . $anime['id'];
         $anime['title'] = (string)$xml->attributes()->name;
         $anime['title_native'] = $title_native;
         $anime['title_romaji'] = $title_romaji;

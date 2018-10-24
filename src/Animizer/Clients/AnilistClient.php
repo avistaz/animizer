@@ -21,7 +21,7 @@ class AnilistClient extends Client
 
         $anime['id'] = $data['id'];
         $anime['type'] = $data['format'];
-        $anime['url'] = 'https://anilist.co/anime/' . $anime['id'];
+        $anime['url'] = 'anilist.co/' . strtolower($anime['type']) . '/' . $anime['id'];
         $anime['language'] = $data['countryOfOrigin'];
         $anime['adult'] = $data['isAdult'];
         $anime['title'] = $data['title']['english'];

@@ -58,7 +58,7 @@ class AnidbClient extends Client
         list($title, $title_native, $title_romaji) = $this->guessMainTitles($titles, $language);
 
         $anime['type'] = (string)$xml->type;
-        $anime['url'] = 'https://anidb.net/a' . $anime['id'];
+        $anime['url'] = 'anidb.net/a' . $anime['id'];
         $anime['language'] = $language;
         $anime['title'] = $title;
         $anime['title_native'] = $title_native;
