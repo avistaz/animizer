@@ -17,6 +17,11 @@ class Anime extends Base
     public $type;
 
     /**
+     * @var string
+     */
+    public $url;
+
+    /**
      * @var Language
      */
     public $language;
@@ -263,7 +268,7 @@ class Anime extends Base
 
         if (!empty($type)) {
             $type = strtolower($this->type);
-            $type = str_replace([' ', '/', '.'], '.', $type);
+            $type = preg_replace('/[\s-_\/\\\.~,]+/', '.', $type);
 
             switch ($type) {
                 case 'oav':

@@ -5,6 +5,7 @@ namespace Animizer\Clients;
 use Animizer\Data\Anime;
 use Animizer\Data\Person;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use SimpleXMLElement;
 
 class AnnClient extends Client
@@ -30,10 +31,12 @@ class AnnClient extends Client
             $xml = $this->parseXml($data);
         }
 
+        $type = 'anime';
         if ($xml->anime->count()) {
             $xml = $xml->anime;
         } elseif ($xml->manga->count()) {
             $xml = $xml->manga;
+            $type = 'manga';
         }
 
         if (!empty($xml->warning)) {
@@ -48,6 +51,7 @@ class AnnClient extends Client
         $anime = [];
         $anime['id'] = (string)$xml->attributes()->id;
         $anime['type'] = (string)$xml->attributes()->type;
+        $anime['url'] = 'https://www.animenewsnetwork.com/encyclopedia/' . $type . '.php?id=' . $anime['id'];
         $anime['title'] = (string)$xml->attributes()->name;
         $anime['title_native'] = $title_native;
         $anime['title_romaji'] = $title_romaji;
@@ -80,7 +84,7 @@ class AnnClient extends Client
 
         if ($anime['type'] == 'manga') {
             $precision = (string)$xml->attributes()->precision;
-            if (!empty($precision)) {
+            if (!empty($precision) && !Str::startsWith($precision, ['manga'])) {
                 $anime['type'] = $precision;
             }
         }

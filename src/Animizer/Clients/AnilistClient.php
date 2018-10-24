@@ -17,8 +17,11 @@ class AnilistClient extends Client
     {
         $data = $this->performQuery($ids);
 
+//        die($data);
+
         $anime['id'] = $data['id'];
         $anime['type'] = $data['format'];
+        $anime['url'] = 'https://anilist.co/anime/' . $anime['id'];
         $anime['language'] = $data['countryOfOrigin'];
         $anime['adult'] = $data['isAdult'];
         $anime['title'] = $data['title']['english'];
@@ -78,6 +81,7 @@ class AnilistClient extends Client
             synonyms
             countryOfOrigin
             isAdult
+            status
             description
             startDate {
               year
@@ -89,6 +93,7 @@ class AnilistClient extends Client
               month
               day
             }
+            season
             duration
             trailer {
               id
@@ -105,6 +110,8 @@ class AnilistClient extends Client
             }
             genres
             episodes
+            chapters
+            volumes
             tags {
               id
               name
@@ -113,7 +120,7 @@ class AnilistClient extends Client
               isAdult
               rank
             }
-            staff(perPage: 100, sort: ROLE) {
+            staff(perPage: 500, sort: ROLE) {
               edges {
                 id
                 role
@@ -131,7 +138,7 @@ class AnilistClient extends Client
                 }
               }
             }
-            characters(perPage: 100, sort: ROLE) {
+            characters(perPage: 500, sort: ROLE) {
               edges {
                 id
                 role
@@ -197,7 +204,7 @@ class AnilistClient extends Client
         } elseif (isset($ids['mal'])) {
             $variables['idMal'] = $ids['mal'];
         } else {
-            throw new \Exception('Ids required to perform request');
+            throw new \Exception('id or idMal required to perform request');
         }
 
         $response = $this->guzzleClient->request('POST', 'https://graphql.anilist.co', [
