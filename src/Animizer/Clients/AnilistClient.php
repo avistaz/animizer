@@ -3,6 +3,7 @@
 namespace Animizer\Clients;
 
 use Animizer\Data\Anime;
+use Animizer\Data\Person;
 
 class AnilistClient extends Client
 {
@@ -17,12 +18,12 @@ class AnilistClient extends Client
     {
         $data = $this->performQuery($ids);
 
-//        die($data);
+        $url_type = (strtolower($data['format']) == 'manga') ? 'manga' : 'anime';
 
         $anime['id'] = $data['id'];
         $anime['type'] = $data['format'];
-        $anime['url'] = 'anilist.co/' . strtolower($anime['type']) . '/' . $anime['id'];
-        $anime['language'] = $data['countryOfOrigin'];
+        $anime['url'] = 'anilist.co/' . $url_type . '/' . $anime['id'];
+        $anime['language'] = strtolower($data['countryOfOrigin']);
         $anime['adult'] = $data['isAdult'];
         $anime['title'] = $data['title']['english'];
         $anime['title_native'] = $data['title']['native'];
@@ -53,7 +54,49 @@ class AnilistClient extends Client
                 'adult' => $item['isAdult'],
             ];
         }, $data['tags']);
-        $anime['characters'] = [];
+
+        if (isset($data['characters']['edges'])) {
+            $characters = $data['characters']['edges'];
+            $anime['characters'] = array_map(function ($item) {
+                $full_name = '';
+                if (!empty($item['node']['name']['first'])) {
+                    $full_name = $item['node']['name']['first'];
+                }
+                if (!empty($item['node']['name']['last'])) {
+                    $full_name .= ' ' . $item['node']['name']['last'];
+                }
+                $full_name = trim($full_name);
+                if (empty($full_name) && !empty($item['node']['name']['native'])) {
+                    $full_name = $item['node']['name']['native'];
+                }
+
+                $actor = [];
+
+                $voiceActors = collect($item['voiceActors']);
+                if ($voiceActors->count()) {
+                    $voiceActor = $voiceActors->whereNotIn('language', ['ENGLISH'])->first();
+                    if ($voiceActor) {
+                        $actor = new Person([
+                            'id' => $voiceActor['id'],
+                            'name' => $voiceActor['name']['first'] . ' ' . $voiceActor['name']['last'],
+                            'name_native' => $voiceActor['name']['native'],
+                            'biography' => $voiceActor['description'],
+                            'photo' => $voiceActor['image']['large'] ?? $voiceActor['image']['medium'] ?? null,
+                        ]);
+                    }
+                }
+
+                return [
+                    'id' => $item['node']['id'] ?? null,
+                    'type' => $item['role'] ?? null,
+                    'name' => $full_name ?? null,
+                    'description' => $item['node']['description'] ?? null,
+                    'picture' => $item['node']['image']['large'] ?? $item['node']['image']['medium'] ?? null,
+                    'actor' => $actor,
+                ];
+            }, $characters);
+        }
+
         $anime['episode_count'] = $data['episodes'];
         $anime['episodes'] = [];
         $anime['franchise'] = [];
@@ -82,7 +125,7 @@ class AnilistClient extends Client
             countryOfOrigin
             isAdult
             status
-            description
+            description(asHtml: true)
             startDate {
               year
               month
@@ -149,8 +192,12 @@ class AnilistClient extends Client
                     last
                     native
                   }
-                  description
+                  description(asHtml: true)
                   siteUrl
+                  image {
+                    large
+                    medium
+                  }
                 }
                 voiceActors {
                   id
@@ -164,7 +211,7 @@ class AnilistClient extends Client
                     large
                     medium
                   }
-                  description
+                  description(asHtml: true)
                 }
               }
             }

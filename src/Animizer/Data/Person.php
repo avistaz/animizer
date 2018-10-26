@@ -17,6 +17,11 @@ class Person extends Base
     /**
      * @var string
      */
+    public $name_native;
+
+    /**
+     * @var string
+     */
     public $aka;
 
     /**

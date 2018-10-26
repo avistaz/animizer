@@ -17,7 +17,7 @@ class Anime extends Base
     public $type;
 
     /**
-     * @var string
+     * @var string Source URL
      */
     public $url;
 

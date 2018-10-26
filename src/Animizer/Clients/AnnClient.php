@@ -3,6 +3,7 @@
 namespace Animizer\Clients;
 
 use Animizer\Data\Anime;
+use Animizer\Data\Manga;
 use Animizer\Data\Person;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -82,7 +83,10 @@ class AnnClient extends Client
             }
         }
 
-        if ($anime['type'] == 'manga') {
+        if ($type == 'manga') {
+
+            $anime['volume_count'] = $this->getValue($xml, "info[@type='Number of tankoubon']");
+
             $precision = (string)$xml->attributes()->precision;
             if (!empty($precision) && !Str::startsWith($precision, ['manga'])) {
                 $anime['type'] = $precision;
@@ -102,6 +106,9 @@ class AnnClient extends Client
             $anime['adult'] = false;
         }
 
+        if ($type == 'manga') {
+            return new Manga($anime);
+        }
         return new Anime($anime);
     }
 
@@ -138,6 +145,16 @@ class AnnClient extends Client
             }
             if (isset($matches[1][1])) {
                 $end = $matches[1][1];
+            }
+
+            if (empty($start) && empty($end)) {
+                preg_match_all('/(\d{4}-\d{2})/i', $date, $matches);
+                if (isset($matches[1][0])) {
+                    $start = $matches[1][0] . '-01';
+                }
+                if (isset($matches[1][1])) {
+                    $end = $matches[1][1] . '-01';
+                }
             }
         }
 
