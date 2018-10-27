@@ -11,7 +11,7 @@ use SimpleXMLElement;
 
 class AnidbClient extends Client
 {
-    protected $apiUrl = 'https://api.anidb.net:9001/httpapi?request=anime&client=##APIKEY##&clientver=##APIVERSION##&protover=1&aid=';
+    public $apiUrl = 'https://api.anidb.net:9001/httpapi?request=anime&client=##APIKEY##&clientver=##APIVERSION##&protover=1&aid=';
 
     protected $imageUrl = 'https://img7.anidb.net/pics/anime/';
 

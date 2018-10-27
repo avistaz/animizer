@@ -7,7 +7,7 @@ use Animizer\Data\Person;
 
 class AnilistClient extends Client
 {
-    protected $apiUrl = 'https://graphql.anilist.co';
+    public $apiUrl = 'https://graphql.anilist.co';
 
     public function __construct()
     {

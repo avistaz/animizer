@@ -11,7 +11,7 @@ use SimpleXMLElement;
 
 class AnnClient extends Client
 {
-    protected $apiUrl = 'http://cdn.animenewsnetwork.com/encyclopedia/api.xml';
+    public $apiUrl = 'http://cdn.animenewsnetwork.com/encyclopedia/api.xml';
 
     protected $imageUrl = 'http://www.animenewsnetwork.com/images/encyc/';
 

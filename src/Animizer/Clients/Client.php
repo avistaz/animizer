@@ -7,7 +7,7 @@ use GuzzleHttp\Client as GuzzleClient;
 
 abstract class Client
 {
-    protected $apiUrl;
+    public $apiUrl;
 
     protected $apiKey;
 
