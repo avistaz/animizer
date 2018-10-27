@@ -162,6 +162,10 @@ class Anime extends Base
         $this->sources = collect($this->sources)->map(function ($source) {
             return new Source($source);
         });
+
+        if (empty($this->runtime) && $this->episodes->count()) {
+            $this->runtime = $this->guessRuntime();
+        }
     }
 
     private function guessType()
@@ -291,5 +295,19 @@ class Anime extends Base
         }
 
         return $type;
+    }
+
+    private function guessRuntime()
+    {
+        if ($this->type == 'movie') {
+            return $this->episodes->first()->runtime;
+        }
+
+        $tops = $this->episodes->groupBy('runtime');
+        $tops = $tops->map(function ($item, $key) {
+            return collect($item)->count();
+        });
+
+        return $tops->sort()->keys()->last();
     }
 }
