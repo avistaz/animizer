@@ -11,15 +11,17 @@ use SimpleXMLElement;
 
 class AnidbClient extends Client
 {
-    protected $apiUrl = 'https://api.anidb.net:9001/httpapi?request=anime&client=##APIKEY##&clientver=1&protover=1&aid=';
+    protected $apiUrl = 'https://api.anidb.net:9001/httpapi?request=anime&client=##APIKEY##&clientver=##APIVERSION##&protover=1&aid=';
 
     protected $imageUrl = 'https://img7.anidb.net/pics/anime/';
 
-    public function __construct($apiKey)
+    public function __construct($api_key, $api_version = 1)
     {
-        $this->apiKey = $apiKey;
+        $this->apiKey = $api_key;
 
         parent::__construct();
+
+        $this->apiUrl = str_replace('##APIVERSION##', $api_version, $this->apiUrl);
     }
 
     /**
