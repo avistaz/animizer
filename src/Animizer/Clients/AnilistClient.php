@@ -20,15 +20,38 @@ class AnilistClient extends Client
 
         $url_type = (strtolower($data['format']) == 'manga') ? 'manga' : 'anime';
 
+        $country = strtolower($data['countryOfOrigin']);
+        $languages = [
+            'jp' => 'ja',
+            'kr' => 'ko',
+            'cn' => 'zh-cn',
+            'hk' => 'zh-hk',
+            'mo' => 'zh-mo',
+            'sg' => 'zh-sg',
+            'tw' => 'zh-tw',
+            'th' => 'th',
+        ];
+
+        $titles = null;
+        if (!empty($data['synonyms'])) {
+            $titles = array_map(function ($i) {
+                return [
+                    'type' => 'alt',
+                    'title' => $i,
+                ];
+            }, $data['synonyms']);
+        }
+
+
         $anime['id'] = $data['id'];
         $anime['type'] = $data['format'];
         $anime['url'] = 'anilist.co/' . $url_type . '/' . $anime['id'];
-        $anime['language'] = strtolower($data['countryOfOrigin']);
+        $anime['language'] = $languages[$country] ?? 'ja';
         $anime['adult'] = $data['isAdult'];
-        $anime['title'] = $data['title']['english'];
+        $anime['title'] = $data['title']['english'] ?? $data['title']['romaji'] ?? $data['title']['native'];
         $anime['title_native'] = $data['title']['native'];
         $anime['title_romaji'] = $data['title']['romaji'];
-        $anime['titles'] = [];
+        $anime['titles'] = $titles;
 
         if (!empty($data['startDate']['year']) && !empty($data['startDate']['month']) && !empty($data['startDate']['day'])) {
             $anime['start_date'] = $data['startDate']['year'] . '-' . $data['startDate']['month'] . '-' . $data['startDate']['day'];
